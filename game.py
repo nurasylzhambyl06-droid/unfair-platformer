@@ -54,15 +54,6 @@ class Game:
         self.current_level=0
         self.load_level()
 
-        self.goal = pygame.Rect(
-            sx(700),
-            sy(500),
-            sx(50),
-            sy(50)
-            )
-        
-        self.goal_direction=1
-
         self.running = True
         self.won = False
 
@@ -150,6 +141,14 @@ class Game:
             else:
                 self.state="WIN"
 
+        if self.goal_moving:
+            self.goal.x += 3 * self.goal_direction
+            if self.goal.x > sx(1020):
+                self.goal_direction = -1
+                
+            if self.goal.x < sx(600):
+                self.goal_direction = 1
+
     def draw(self):
         self.screen.fill(BACKGROUND)
         
@@ -219,10 +218,13 @@ class Game:
         self.goal=pygame.Rect(
             level.goal_position[0],
             level.goal_position[1],
-            50,
-            50
+            sx(50),
+            sy(50)
             )
         
+        self.goal_moving = getattr(level, "goal_moving", False)
+        self.goal_direction = 1
+
         spawn=level.player_spawn
         
         self.player.rect.x=spawn[0]

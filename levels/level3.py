@@ -30,5 +30,6 @@ traps=[
 
 ]
 
-goal_position=(sx(720),sy(130))
+goal_position = (sx(720), sy(130))
+goal_moving = False
 player_spawn = (sx(100),sy(100))
