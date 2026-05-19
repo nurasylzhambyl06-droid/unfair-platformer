@@ -1,5 +1,5 @@
 import pygame
-from settings import WIDTH, HEIGHT, FPS
+from settings import sx, sy, WIDTH, HEIGHT, FPS
 from player import Player
 from platform import Platform
 from traps import Trap, MovingTrap
@@ -9,6 +9,10 @@ from falling_block import FallingBlock
 from trigger import Trigger
 from settings import GOAL_COLOR
 from settings import BACKGROUND
+import levels.level1 as level1
+import levels.level2 as level2
+import levels.level3 as level3
+from settings import HEIGHT
 
 class Game:
     def __init__(self):
@@ -20,25 +24,43 @@ class Game:
         self.state = "MENU"
 
         self.player = Player(100, 100)
-        self.trigger=Trigger(
-            420,
-            500,
-            30,
-            30
-        )
+        
+        fake_platform = FakePlatform(
+             sx(450),
+             sy(350),
+             sx(150),
+             sy(20)
+             )
+        
         self.platforms = [
-            Platform(0,550,800,50),
-            Platform(200,450,200,20),
-            FakePlatform(450,350,150,20),
-            FallingBlock(600, 300, 100, 20)
-        ]
+            Platform(sx(0),sy(550),sx(800),sy(50)),
+            Platform(sx(200),sy(450),sx(200),sy(20)),
+            fake_platform
+            ]      
+        
+        self.trigger=Trigger(
+            sx(700),
+            sy(500),
+            sx(30),
+            sy(30)
+            )
 
-        self.traps = [
-            Trap(300, 530, 50, 20),
-            MovingTrap(500, 430, 50, 20)
-        ]
+        self.levels=[
+            level1,
+            level2,
+            level3
+            ]
+        
+        self.current_level=0
+        self.load_level()
 
-        self.goal=pygame.Rect(700,500,50,50)
+        self.goal = pygame.Rect(
+            sx(700),
+            sy(500),
+            sx(50),
+            sy(50)
+            )
+        
         self.goal_direction=1
 
         self.running = True
@@ -73,8 +95,8 @@ class Game:
         title = font.render("UNFAIR PLATFORMER", True, (255, 255, 255))
         start = font.render("Press ENTER to Start", True, (255, 255, 255))
         
-        self.screen.blit(title, (180, 200))
-        self.screen.blit(start, (180, 300))
+        self.screen.blit(title, (WIDTH//2-280, 312))
+        self.screen.blit(start, (WIDTH//2-250, 412))
         
         keys = pygame.key.get_pressed()
         
@@ -86,16 +108,13 @@ class Game:
 
         if self.trigger.activated:
             self.goal.x += 3*self.goal_direction
-            if self.goal.x>720:
+            if self.goal.x>sx(720):
                 self.goal_direction=-1
-            if self.goal.x<500:
+            if self.goal.x<sx(500):
                 self.goal_direction=1
 
         if self.player.rect.colliderect(self.trigger.rect):
             self.trigger.activate()
-            for platform in self.platforms:
-                if isinstance(platform,FakePlatform):
-                    platform.touch()
         
         for trap in self.traps:
             if isinstance(trap, MovingTrap):
@@ -103,11 +122,14 @@ class Game:
                 
             if self.player.rect.colliderect(trap.rect):
                 self.player.respawn()
+                self.load_level()
 
         for platform in self.platforms:
             if isinstance(platform, FakePlatform):
                 if self.player.rect.colliderect(platform.rect):
-                    platform.touch()
+                    if self.player.vel_y > 0:
+                        if self.player.rect.bottom <= platform.rect.top+15:
+                            platform.touch()
 
         for platform in self.platforms:
             if isinstance(platform,FallingBlock):
@@ -115,8 +137,18 @@ class Game:
                     platform.falling=True
                 platform.update()
 
+        if self.player.rect.y>HEIGHT:
+            self.player.respawn()
+            self.load_level()
+
         if self.player.rect.colliderect(self.goal):
-            self.state="WIN"
+            self.current_level+=1
+            
+            if self.current_level<len(self.levels):
+                self.load_level()
+                
+            else:
+                self.state="WIN"
 
     def draw(self):
         self.screen.fill(BACKGROUND)
@@ -168,7 +200,7 @@ class Game:
     def win(self):
         self.screen.fill((0,0,0))
         
-        font=pygame.font.SysFont("Arial",50)
+        font=pygame.font.SysFont("Arial", 50)
         
         text=font.render(
             "YOU WIN!",
@@ -176,4 +208,25 @@ class Game:
             (255,255,255)
             )
         
-        self.screen.blit(text,(250,250))
+        self.screen.blit(text,(sx(300),sy(250)))
+
+    def load_level(self):
+        level=self.levels[self.current_level]
+        import copy
+        self.platforms=copy.deepcopy(level.platforms)
+        self.traps=copy.deepcopy(level.traps)
+        
+        self.goal=pygame.Rect(
+            level.goal_position[0],
+            level.goal_position[1],
+            50,
+            50
+            )
+        
+        spawn=level.player_spawn
+        
+        self.player.rect.x=spawn[0]
+        self.player.rect.y=spawn[1]
+        
+        self.player.spawn_x=spawn[0]
+        self.player.spawn_y=spawn[1]

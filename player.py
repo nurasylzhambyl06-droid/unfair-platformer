@@ -1,5 +1,5 @@
 import pygame
-from settings import GRAVITY, PLAYER_SPEED, JUMP_POWER
+from settings import GRAVITY, PLAYER_SPEED, JUMP_POWER, sy, sx
 from settings import PLAYER_COLOR
 
 class Player:

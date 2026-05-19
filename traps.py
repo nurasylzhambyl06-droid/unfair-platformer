@@ -1,5 +1,5 @@
 import pygame
-from settings import TRAP_COLOR
+from settings import TRAP_COLOR, sx
 
 class Trap:
     def __init__(self, x, y, w, h):

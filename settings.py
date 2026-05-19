@@ -1,6 +1,13 @@
 # settings.py
-WIDTH = 800
-HEIGHT = 600
+WIDTH = 1100
+HEIGHT = 800
+BASE_WIDTH = 800
+BASE_HEIGHT = 600
+def sx(x):
+    return int(x * WIDTH / BASE_WIDTH)
+
+def sy(y):
+    return int(y * HEIGHT / BASE_HEIGHT)
 FPS = 60
 
 GRAVITY = 0.8
