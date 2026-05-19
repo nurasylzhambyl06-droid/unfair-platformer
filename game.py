@@ -3,6 +3,7 @@ from settings import sx, sy, WIDTH, HEIGHT, FPS
 from player import Player
 from platform import Platform
 from traps import Trap, MovingTrap
+import trigger
 from ui import draw_deaths
 from fake_platform import FakePlatform
 from falling_block import FallingBlock
@@ -36,14 +37,7 @@ class Game:
             Platform(sx(0),sy(550),sx(800),sy(50)),
             Platform(sx(200),sy(450),sx(200),sy(20)),
             fake_platform
-            ]      
-        
-        self.trigger=Trigger(
-            sx(700),
-            sy(500),
-            sx(30),
-            sy(30)
-            )
+            ] 
 
         self.levels=[
             level1,
@@ -52,6 +46,7 @@ class Game:
             ]
         
         self.current_level=0
+        self.triggers = []
         self.load_level()
 
         self.running = True
@@ -94,32 +89,36 @@ class Game:
         if keys[pygame.K_RETURN]:
             self.state = "PLAYING"
 
-    def update(self):
+    def update(self):   
         self.player.update(self.platforms)
 
-        if self.trigger.activated:
-            self.goal.x += 3*self.goal_direction
-            if self.goal.x>sx(720):
-                self.goal_direction=-1
-            if self.goal.x<sx(500):
-                self.goal_direction=1
+        if self.trigger and self.trigger.activated:
+            self.goal.x += 3 * self.goal_direction
+            if self.goal.x > sx(1000):
+                self.goal_direction = -1
+            
+            if self.goal.x < sx(700):
+                self.goal_direction = 1
 
-        if self.player.rect.colliderect(self.trigger.rect):
-            self.trigger.activate()
+
+        if self.trigger:
+            self.trigger.check(self.player)
         
         for trap in self.traps:
-            if isinstance(trap, MovingTrap):
-                trap.update()
-                
+            if hasattr(trap,"update"):
+                trap.update(self.player)
+            
             if self.player.rect.colliderect(trap.rect):
                 self.player.respawn()
                 self.load_level()
 
         for platform in self.platforms:
-            if isinstance(platform, FakePlatform):
+            if isinstance(platform,FakePlatform):
+                if not platform.active:
+                    continue
                 if self.player.rect.colliderect(platform.rect):
                     if self.player.vel_y > 0:
-                        if self.player.rect.bottom <= platform.rect.top+15:
+                        if self.player.rect.bottom<=platform.rect.top+10:
                             platform.touch()
 
         for platform in self.platforms:
@@ -129,8 +128,10 @@ class Game:
                 platform.update()
 
         if self.player.rect.y>HEIGHT:
-            self.player.respawn()
-            self.load_level()
+            self.restart_level()
+
+        for trigger in self.triggers:
+            trigger.check(self.player)
 
         if self.player.rect.colliderect(self.goal):
             self.current_level+=1
@@ -141,24 +142,25 @@ class Game:
             else:
                 self.state="WIN"
 
-        if self.goal_moving:
-            self.goal.x += 3 * self.goal_direction
-            if self.goal.x > sx(1020):
-                self.goal_direction = -1
+        if self.goal_moving and self.trigger.activated:
+            self.goal.x += 6*self.goal_direction
+            if self.goal.x>sx(1000):
+                self.goal_direction=-1
                 
-            if self.goal.x < sx(600):
-                self.goal_direction = 1
+            if self.goal.x<sx(600):
+                self.goal_direction=1
 
     def draw(self):
         self.screen.fill(BACKGROUND)
         
         self.player.draw(self.screen)
         
-        pygame.draw.rect(
-            self.screen,
-            (0,0,255),
-            self.trigger.rect
-            )
+        if self.trigger:
+            pygame.draw.rect(
+                self.screen,
+                (0,0,255),
+                self.trigger.rect
+                )
         
         for p in self.platforms:
             if hasattr(p,"active"):
@@ -225,6 +227,8 @@ class Game:
         self.goal_moving = getattr(level, "goal_moving", False)
         self.goal_direction = 1
 
+        self.trigger=getattr(level, "trigger", [])
+
         spawn=level.player_spawn
         
         self.player.rect.x=spawn[0]
@@ -232,3 +236,8 @@ class Game:
         
         self.player.spawn_x=spawn[0]
         self.player.spawn_y=spawn[1]
+
+    def restart_level(self):
+        self.player.respawn()
+        self.load_level()
+        self.trigger.activated=False

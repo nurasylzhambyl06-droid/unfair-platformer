@@ -34,3 +34,32 @@ class MovingTrap(Trap):
 
         if self.rect.x <= 400 or self.rect.x >= 700:
             self.direction *= -1
+
+class HiddenSpike(Trap):
+
+    def __init__(self,x,y,w,h):
+
+        super().__init__(x,y,w,h)
+
+        self.active=False
+        self.speed=14
+
+    def activate(self):
+
+        self.active=True
+
+    def update(self,player):
+
+        if self.active:
+
+            if self.rect.x < player.rect.x:
+                self.rect.x += self.speed
+
+            elif self.rect.x > player.rect.x:
+                self.rect.x -= self.speed
+
+
+    def draw(self,screen):
+
+        if self.active:
+            super().draw(screen)

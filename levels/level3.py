@@ -1,35 +1,47 @@
 from platform import Platform
-from settings import sx, sy
-from traps import Trap, MovingTrap
-from fake_platform import FakePlatform
-from falling_block import FallingBlock
+from traps import Trap,HiddenSpike
+from trigger import Trigger
+from settings import sx,sy
+
+spike=HiddenSpike(
+sx(580),
+sy(530),
+sx(50),
+sy(20)
+)
 
 platforms=[
 
-    Platform(sx(0),sy(550),sx(800),sy(50)),
+Platform(sx(0),sy(550),sx(800),sy(50)),
 
-    Platform(sx(100),sy(480),sx(100),sy(20)),
+Platform(sx(150),sy(450),sx(120),sy(20)),
 
-    FakePlatform(sx(250),sy(420),sx(100),sy(20)),
+Platform(sx(350),sy(350),sx(120),sy(20)),
 
-    FallingBlock(sx(400),sy(350),sx(100),sy(20)),
-
-    Platform(sx(600),sy(260),sx(100),sy(20)),
-
-    Platform(sx(700),sy(180),sx(80),sy(20))
-
+Platform(sx(550),sy(250),sx(120),sy(20))
 ]
 
 traps=[
 
-    Trap(sx(200),sy(530),sx(50),sy(20)),
-
-    MovingTrap(sx(300),sy(300),sx(50),sy(20)),
-
-    Trap(sx(500),sy(330),sx(50),sy(20))
-
+spike
 ]
 
-goal_position = (sx(720), sy(130))
-goal_moving = False
-player_spawn = (sx(100),sy(100))
+trigger=Trigger(
+sx(390),
+sy(330),
+sx(30),
+sy(30),
+spike
+)
+
+goal_position=(
+sx(650),
+sy(180)
+)
+
+goal_moving=True
+
+player_spawn=(
+sx(50),
+sy(450)
+)

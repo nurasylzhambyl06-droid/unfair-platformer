@@ -10,9 +10,9 @@ def sy(y):
     return int(y * HEIGHT / BASE_HEIGHT)
 FPS = 60
 
-GRAVITY = 0.8
-PLAYER_SPEED = 5
-JUMP_POWER = 15
+GRAVITY = 0.9
+PLAYER_SPEED = 7
+JUMP_POWER = 18
 
 # COLORS
 

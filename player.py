@@ -1,64 +1,115 @@
 import pygame
-from settings import GRAVITY, PLAYER_SPEED, JUMP_POWER, sy, sx
-from settings import PLAYER_COLOR
+from settings import *
 
 class Player:
-    def __init__(self, x, y):
-        self.rect = pygame.Rect(x, y, 40, 50)
-        self.vel_y = 0
-        self.on_ground = False
-        self.spawn_x = x
-        self.spawn_y = y
-        self.deaths = 0
 
-    def update(self, platforms):
-        keys = pygame.key.get_pressed()
+    def __init__(self,x,y):
 
-        #movement
+        self.rect=pygame.Rect(x,y,40,50)
+
+        self.vel_y=0
+        self.on_ground=False
+
+        self.spawn_x=x
+        self.spawn_y=y
+
+        self.deaths=0
+
+    def update(self,platforms):
+
+        keys=pygame.key.get_pressed()
+
+        dx=0
+
         if keys[pygame.K_a]:
-            self.rect.x -= PLAYER_SPEED
+            dx=-PLAYER_SPEED
+
         if keys[pygame.K_d]:
-            self.rect.x += PLAYER_SPEED
+            dx=PLAYER_SPEED
 
-        # jump
-        if keys[pygame.K_SPACE] and self.on_ground:
-            self.vel_y = -JUMP_POWER
-            self.on_ground = False
+        # X movement
+        self.rect.x+=dx
 
-        # gravity
-        self.vel_y += GRAVITY
-        self.rect.y += self.vel_y
-
-        # collisions
-        self.on_ground = False
         for platform in platforms:
+
             if hasattr(platform,"active"):
                 if not platform.active:
                     continue
 
             if self.rect.colliderect(platform.rect):
-                if self.vel_y > 0:
-                    self.rect.bottom = platform.rect.top
-                    self.vel_y = 0
-                    self.on_ground = True
+
+                if dx>0:
+                    self.rect.right=platform.rect.left
+
+                if dx<0:
+                    self.rect.left=platform.rect.right
+
+
+        # jump
+        if keys[pygame.K_SPACE] and self.on_ground:
+
+            self.vel_y=-JUMP_POWER
+            self.on_ground=False
+
+
+        # gravity
+        self.vel_y+=GRAVITY
+
+        self.rect.y+=self.vel_y
+
+        self.on_ground=False
+
+        # Y collision
+        for platform in platforms:
+
+            if hasattr(platform,"active"):
+                if not platform.active:
+                    continue
+
+            if self.rect.colliderect(platform.rect):
+
+                # falling
+                if self.vel_y>0:
+
+                    self.rect.bottom=platform.rect.top
+                    self.vel_y=0
+                    self.on_ground=True
+
+                # jumping into platform
+                elif self.vel_y<0:
+
+                    self.rect.top=platform.rect.bottom
+                    self.vel_y=0
+
 
     def respawn(self):
-        self.rect.x = self.spawn_x
-        self.rect.y = self.spawn_y
-        self.vel_y = 0
-        self.deaths += 1
+
+        self.rect.x=self.spawn_x
+        self.rect.y=self.spawn_y
+
+        self.vel_y=0
+
+        self.deaths+=1
+
 
     def draw(self,screen):
-        pygame.draw.rect(screen,PLAYER_COLOR,self.rect)
-        
+
         pygame.draw.rect(
             screen,
-            (0,0,0),
-            (self.rect.x+8,self.rect.y+10,5,5)
-            )
-        
-        pygame.draw.rect(
+            PLAYER_COLOR,
+            self.rect
+        )
+
+        pygame.draw.circle(
             screen,
             (0,0,0),
-            (self.rect.x+25,self.rect.y+10,5,5)
-            )
+            (self.rect.x+12,self.rect.y+15),
+            3
+        )
+
+        pygame.draw.circle(
+            screen,
+            (0,0,0),
+            (self.rect.x+28,self.rect.y+15),
+            3
+        )
