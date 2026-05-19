@@ -4,7 +4,6 @@ from traps import Trap
 from fake_platform import FakePlatform
 
 platforms=[
-
     Platform(sx(0),sy(550),sx(800),sy(50)),
 
     Platform(sx(150),sy(450),sx(100),sy(20)),
