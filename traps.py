@@ -1,11 +1,25 @@
 import pygame
+from settings import TRAP_COLOR
 
 class Trap:
     def __init__(self, x, y, w, h):
         self.rect = pygame.Rect(x, y, w, h)
 
-    def draw(self, screen):
-        pygame.draw.rect(screen, (255, 0, 0), self.rect)
+    def draw(self,screen):
+        x=self.rect.x
+        y=self.rect.y
+        
+        points=[
+            (x,y+self.rect.height),
+            (x+self.rect.width//2,y),
+            (x+self.rect.width,y+self.rect.height)
+            ]
+        
+        pygame.draw.polygon(
+            screen,
+            TRAP_COLOR,
+            points
+            )
 
 class MovingTrap(Trap):
 
