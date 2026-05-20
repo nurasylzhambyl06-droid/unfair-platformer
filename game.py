@@ -14,10 +14,15 @@ import levels.level1 as level1
 import levels.level2 as level2
 import levels.level3 as level3
 from settings import HEIGHT
+from save_system import SaveSystem
 
 class Game:
     def __init__(self):
         pygame.init()
+        self.shake_timer=0
+        self.shake_power=0
+
+        self.best_score=SaveSystem.load()
 
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         self.clock = pygame.time.Clock()
@@ -44,6 +49,7 @@ class Game:
             level2,
             level3
             ]
+        self.death_flash=0
         
         self.current_level=0
         self.triggers = []
@@ -75,22 +81,49 @@ class Game:
         pygame.quit()
     
     def menu(self):
-        self.screen.fill((20, 20, 20))
-        font = pygame.font.SysFont("Arial", 50)
+        self.screen.fill((10,10,20))
+        title_font=pygame.font.SysFont("Arial",70)
         
-        title = font.render("UNFAIR PLATFORMER", True, (255, 255, 255))
-        start = font.render("Press ENTER to Start", True, (255, 255, 255))
+        small_font=pygame.font.SysFont("Arial",35)
         
-        self.screen.blit(title, (WIDTH//2-280, 312))
-        self.screen.blit(start, (WIDTH//2-250, 412))
+        title=title_font.render(
+            "UNFAIR PLATFORMER",
+            True,
+            (255,255,255)
+            )
+        start=small_font.render(
+            "PRESS ENTER",
+            True,
+            (180,180,180)
+            )
         
-        keys = pygame.key.get_pressed()
+        self.screen.blit(
+            title,
+            (WIDTH//2-300,250)
+            )
+        self.screen.blit(
+            start,
+            (WIDTH//2-120,380)
+            )
+        
+        pygame.draw.circle(
+            self.screen,
+            (60,60,80),
+            (WIDTH//2,300),
+            180,
+            2
+            )
+        
+        keys=pygame.key.get_pressed()
         
         if keys[pygame.K_RETURN]:
-            self.state = "PLAYING"
+            self.state="PLAYING"
 
     def update(self):   
         self.player.update(self.platforms)
+        
+        if self.death_flash>0:
+            self.death_flash-=1
 
         if self.trigger and self.trigger.activated:
             self.goal.x += 3 * self.goal_direction
@@ -109,6 +142,9 @@ class Game:
                 trap.update(self.player)
             
             if self.player.rect.colliderect(trap.rect):
+                self.death_flash = 10
+                self.shake(8,15)
+
                 self.player.respawn()
                 self.load_level()
 
@@ -127,7 +163,9 @@ class Game:
                     platform.falling=True
                 platform.update()
 
-        if self.player.rect.y>HEIGHT:
+        if self.player.rect.y > HEIGHT:
+            self.death_flash = 10
+            self.shake(8,15)
             self.restart_level()
 
         for trigger in self.triggers:
@@ -149,15 +187,54 @@ class Game:
                 
             if self.goal.x<sx(600):
                 self.goal_direction=1
+        
+        if self.shake_timer>0:
+            self.shake_timer-=1
 
     def draw(self):
-        self.screen.fill(BACKGROUND)
+        import random
+        offset_x = 0
+        offset_y = 0
+        if self.shake_timer > 0:
+            offset_x = random.randint(
+                -self.shake_power,
+                self.shake_power
+                )
+            offset_y = random.randint(
+                -self.shake_power,
+                self.shake_power
+                )
         
-        self.player.draw(self.screen)
+        game_surface = pygame.Surface((WIDTH, HEIGHT))
+        
+        game_surface.fill((15,15,25))
+        
+        for y in range(HEIGHT):
+            shade = min(255,15+(y//10))
+            
+            pygame.draw.line(
+                game_surface,
+                (shade,shade,shade+8),
+                (0,y),
+                (WIDTH,y)
+                )
+            
+        for i in range(50):
+            x=(i*83)%WIDTH
+            y=(i*57)%HEIGHT
+            
+            pygame.draw.circle(
+                game_surface,
+                (200,200,220),
+                (x,y),
+                1
+                )
+            
+        self.player.draw(game_surface)
         
         if self.trigger:
             pygame.draw.rect(
-                self.screen,
+                game_surface,
                 (0,0,255),
                 self.trigger.rect
                 )
@@ -165,21 +242,21 @@ class Game:
         for p in self.platforms:
             if hasattr(p,"active"):
                 if p.active:
-                    p.draw(self.screen)
+                    p.draw(game_surface)
             else:
-                p.draw(self.screen)
-            
+                p.draw(game_surface)
+                
         for trap in self.traps:
-            trap.draw(self.screen)
+            trap.draw(game_surface)
             
         pygame.draw.rect(
-            self.screen,
+            game_surface,
             GOAL_COLOR,
             self.goal
             )
         
         pygame.draw.line(
-            self.screen,
+            game_surface,
             (255,255,255),
             (self.goal.x+10,self.goal.y),
             (self.goal.x+10,self.goal.y+50),
@@ -187,29 +264,110 @@ class Game:
             )
         
         pygame.draw.polygon(
-            self.screen,
+            game_surface,
             (255,0,255),
             [
                 (self.goal.x+10,self.goal.y),
                 (self.goal.x+35,self.goal.y+10),
                 (self.goal.x+10,self.goal.y+20)
                 ]
+                )
+        
+        draw_deaths(
+            game_surface,
+            self.player.deaths
             )
         
-        draw_deaths(self.screen, self.player.deaths)
-
-    def win(self):
-        self.screen.fill((0,0,0))
-        
-        font=pygame.font.SysFont("Arial", 50)
-        
-        text=font.render(
-            "YOU WIN!",
+        font = pygame.font.SysFont("Arial",25)
+        score = font.render(
+            f"Best: {self.best_score}",
             True,
             (255,255,255)
             )
+        game_surface.blit(
+            score,
+            (10,50)
+            )
         
-        self.screen.blit(text,(sx(300),sy(250)))
+        self.screen.blit(
+            game_surface,
+            (offset_x,offset_y)
+            )
+        
+        if self.death_flash>0:
+            overlay = pygame.Surface((WIDTH,HEIGHT))
+            overlay.set_alpha(120)
+            overlay.fill((255,0,0))
+            
+            self.screen.blit(
+                overlay,
+                (0,0)
+                )
+
+
+    def win(self):
+        self.screen.fill((10,10,20))
+        title_font=pygame.font.SysFont(
+            "Arial",
+            80
+            )
+        small_font=pygame.font.SysFont(
+            "Arial",
+            35
+            )
+        if self.player.deaths<self.best_score:
+            self.best_score=self.player.deaths
+            SaveSystem.save(self.player.deaths)
+        
+        title=title_font.render(
+            "YOU WIN!",
+            True,
+            (255,220,0)
+            )
+        
+        deaths=small_font.render(
+            f"Deaths: {self.player.deaths}",
+            True,
+            (255,255,255)
+            )
+        best=small_font.render(
+            f"Best Score: {self.best_score}",
+            True,
+            (255,255,255)
+            )
+        restart=small_font.render(
+            "Press R to play again",
+            True,
+            (180,180,180)
+            )
+        
+        self.screen.blit(
+            title,
+            (WIDTH//2-180,220)
+            )
+        
+        self.screen.blit(
+            deaths,
+            (WIDTH//2-80,350)
+            )
+        
+        self.screen.blit(
+            best,
+            (WIDTH//2-100,400)
+            )
+        
+        self.screen.blit(
+            restart,
+            (WIDTH//2-160,500)
+            )
+        
+        keys=pygame.key.get_pressed()
+        
+        if keys[pygame.K_r]:
+            self.current_level=0
+            self.player.deaths=0
+            self.load_level()
+            self.state="MENU"
 
     def load_level(self):
         level=self.levels[self.current_level]
@@ -241,3 +399,7 @@ class Game:
         self.player.respawn()
         self.load_level()
         self.trigger.activated=False
+
+    def shake(self,power,time):
+        self.shake_power=power
+        self.shake_timer=time

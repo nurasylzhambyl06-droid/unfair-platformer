@@ -1,5 +1,12 @@
 from game import Game
 
 
-game = Game()
-game.run()
+try:
+
+    game=Game()
+    game.run()
+
+except Exception as e:
+
+    print("ERROR:",e)
+    
