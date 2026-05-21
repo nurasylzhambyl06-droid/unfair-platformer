@@ -13,6 +13,8 @@ from settings import BACKGROUND
 import levels.level1 as level1
 import levels.level2 as level2
 import levels.level3 as level3
+import levels.level4 as level4
+import levels.level5 as level5
 from settings import HEIGHT
 from save_system import SaveSystem
 
@@ -47,7 +49,9 @@ class Game:
         self.levels=[
             level1,
             level2,
-            level3
+            level3,
+            level4,
+            level5
             ]
         self.death_flash=0
         
@@ -139,7 +143,10 @@ class Game:
         
         for trap in self.traps:
             if hasattr(trap,"update"):
-                trap.update(self.player)
+                try:
+                    trap.update(self.player)
+                except TypeError:
+                    trap.update()
             
             if self.player.rect.colliderect(trap.rect):
                 self.death_flash = 10
@@ -180,7 +187,7 @@ class Game:
             else:
                 self.state="WIN"
 
-        if self.goal_moving and self.trigger.activated:
+        if self.goal_moving:
             self.goal.x += 6*self.goal_direction
             if self.goal.x>sx(1000):
                 self.goal_direction=-1
@@ -232,12 +239,12 @@ class Game:
             
         self.player.draw(game_surface)
         
-        if self.trigger:
-            pygame.draw.rect(
-                game_surface,
-                (0,0,255),
-                self.trigger.rect
-                )
+        #if self.trigger:
+        #    pygame.draw.rect(
+        #        game_surface,
+        #        (0,0,255),
+        #        self.trigger.rect
+        #        )
         
         for p in self.platforms:
             if hasattr(p,"active"):

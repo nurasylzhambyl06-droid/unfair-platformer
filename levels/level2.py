@@ -1,55 +1,29 @@
 from platform import Platform
-from settings import sx,sy
+from settings import sx, sy
+from traps import Trap, MovingTrap
 from fake_platform import FakePlatform
-from traps import Trap
-from trigger import Trigger
+from falling_block import FallingBlock
 
+platforms = [
 
+    Platform(sx(0), sy(550), sx(800), sy(50)),
 
-fake=FakePlatform(
-sx(350),
-sy(350),
-sx(120),
-sy(20)
-)
+    Platform(sx(120), sy(470), sx(120), sy(20)),
 
-platforms=[
+    FakePlatform(sx(300), sy(400), sx(120), sy(20)),
 
-Platform(sx(0),sy(550),sx(800),sy(50)),
+    FallingBlock(sx(470), sy(330), sx(120), sy(20)),
 
-Platform(sx(150),sy(450),sx(120),sy(20)),
-
-fake,
-
-Platform(sx(550),sy(260),sx(120),sy(20))
+    Platform(sx(650), sy(250), sx(100), sy(20))
 ]
 
-traps=[
+traps = [
 
-Trap(
-sx(420),
-sy(530),
-sx(50),
-sy(20)
-)
+    Trap(sx(320), sy(530), sx(50), sy(20)),
+
+    MovingTrap(sx(500), sy(300), sx(50), sy(20))
 ]
 
-trigger=Trigger(
-sx(250),
-sy(430),
-sx(30),
-sy(30),
-fake
-)
-
-goal_position=(
-sx(650),
-sy(180)
-)
-
-goal_moving=False
-
-player_spawn=(
-sx(50),
-sy(450)
-)
+goal_position = (sx(700), sy(180))
+goal_moving = False
+player_spawn = (sx(100), sy(100))
